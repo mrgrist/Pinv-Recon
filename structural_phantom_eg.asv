@@ -4,7 +4,7 @@
 close all; clear
 addpath("dependencies/")
 load("data/fieldmap.mat")
-load("data/structural_phantom_mtx96.mat") % contains data and waveform
+load("data/structural_phantom_mtx86.mat") % contains data and waveform
 
 mtx_acq=wf.npix;
 nslices=1;

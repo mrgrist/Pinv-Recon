@@ -126,7 +126,9 @@ g = find(cumulative_energy >= svd_threshold, 1);
 if isempty(g);g=size(svdE,1);end
 % imax=svdE(g);
 
-invS=1./svdE; invS(g+1:end)=0;invS=diag(invS);
+invS=1./svdE; 
+invS(g+1:end)=0;
+invS=diag(invS);
 tic, Recon=V*invS*U'; toc, 
 end
 
