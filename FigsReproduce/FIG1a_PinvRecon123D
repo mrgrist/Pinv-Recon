@@ -1,6 +1,8 @@
 % Scientific reports paper submisson Fig. 1a
 % Pinv-Recon demonstration for generic 1D, 2D, 3D cases
 
+addpath('../dependencies/')
+
 %===
 % 1D
 %===
