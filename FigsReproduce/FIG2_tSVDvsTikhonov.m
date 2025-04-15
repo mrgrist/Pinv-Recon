@@ -1,8 +1,22 @@
 % Scientific reports paper submisson Fig. 2
 % Comparison of regularization using truncated SVD and Tikhonov
 % regularization
+close all;clear
 
-ntx=160;
+addpath('../dependencies/')
+ntx=160;load('../data/vd_spiral_mtx160.mat')
+% ntx=64; %to run a smaller/faster version
+
+mtx=ntx;
+FOV=0.192;          % [m]
+res=FOV/mtx;        % [m]
+Gmax=0.080;         % [T/m]
+Smax=200;           % [T/(m*s)]
+BW=125e3;           % [Hz]
+dt=1/(2*BW);        % [s]
+Nint=4;             % [1] number of spiral interleaves
+Nnex=2;             % [1] (optional) NEXing
+
 TMP=linspace(-0.5,0.5,ntx+1); [Rx,Ry]=ndgrid(TMP(1:end-1)); 
 circMASK=sqrt(Rx.^2+Ry.^2)<0.975*0.5;
 IMG0=phantom('Modified Shepp-Logan',ntx);   
@@ -14,20 +28,6 @@ K0=ifftshift(fftn(fftshift(IMG0)));
 I1=ifftshift(ifftn(fftshift(kMASK.*K0)));
 MSEring=mean(abs(I1(circMASK)-IMG0(circMASK)).^2);
 
-%=============================================
-disp('>> 2D Spiral design (Grad & k-traj)');
-%=============================================
-mtx=ntx;
-FOV=0.192;          % [m]
-res=FOV/mtx;        % [m]
-Gmax=0.080;         % [T/m]
-Smax=200;           % [T/(m*s)]
-BW=125e3;           % [Hz]
-dt=1/(2*BW);        % [s]
-Nint=4;             % [1] number of spiral interleaves
-Nnex=2;             % [1] (optional) NEXing
-[k,g,s,time,r,theta]=vds(Smax*1e2,Gmax*1e2,dt,Nint,[FOV*1e2,0],1/(2*res*1e2));
-% interleaving single spiral arm
 TMP=(mtx/2*k/abs(k(end)))' * exp(1i*2*pi*(0:(Nnex*Nint-1))/(Nnex*Nint));
 TMP=TMP+2e-3*randn(size(TMP)); % add rnd to avoid overlapping samples at k=0
 Kx=real(TMP(:)); Ky=imag(TMP(:));
@@ -44,11 +44,11 @@ Noise=randn(size(Data))+1i*randn(size(Data))/2;
 disp('>> Tikhonov + Cholesky');
 %================================
 EHE=Encode'*Encode; 
-maxEig=maxEig_GPU(gpuArray(EHE));
+Eig_max=maxEig(gpuArray(EHE));
 iscale=10.^(-6:0.25:5); 
 for i1=1:length(iscale)
     [i1,length(iscale)]
-    lambda=iscale(i1)*maxEig;
+    lambda=iscale(i1)*Eig_max;
     [L,flag]=chol(EHE+lambda*eye(size(EHE)),'lower'); 
     invL=inv(L); clear L; iEHE=invL'*invL; clear invL;
     % SRF=abs(diag(Recon*Encode)); Noise=abs(diag(Recon*Recon'));
@@ -124,7 +124,7 @@ tIMG=zeros(3*ntx,3*ntx);
 for i1=1:3
     for i2=1:3
         disp([i1,i2]);
-        [L,flag]=chol(EHE+jscale(i1,i2)*maxEig*eye(size(EHE)),'lower'); invL=inv(L); clear L; iEHE=invL'*invL; clear invL;
+        [L,flag]=chol(EHE+jscale(i1,i2)*Eig_max*eye(size(EHE)),'lower'); invL=inv(L); clear L; iEHE=invL'*invL; clear invL;
         tIMG((i2-1)*ntx+(1:ntx),(i1-1)*ntx+(1:ntx))=...
             gather(reshape(iEHE*(Encode'*(1*Data+1*inoise(i2)*Noise)),[ntx,ntx])); 
     end
@@ -154,10 +154,10 @@ imagesc(abs(sIMG_new),[0,1.2]); axis image off, colormap gray;
 % title('Truncated SVD','FontSize',24)
 
 jscale=10.^[-4 -2 -0.1];
-e0=eig(EHE+0*maxEig*eye(size(EHE))); toc, 
-e1=eig(EHE+jscale(1)*maxEig*eye(size(EHE))); toc, 
-e2=eig(EHE+jscale(2)*maxEig*eye(size(EHE))); toc, 
-e3=eig(EHE+jscale(3)*maxEig*eye(size(EHE))); toc, 
+e0=eig(EHE+0*Eig_max*eye(size(EHE))); toc, 
+e1=eig(EHE+jscale(1)*Eig_max*eye(size(EHE))); toc, 
+e2=eig(EHE+jscale(2)*Eig_max*eye(size(EHE))); toc, 
+e3=eig(EHE+jscale(3)*Eig_max*eye(size(EHE))); toc, 
 jenergy=(1-10.^[-4 -2 -0.1].');
 imax1=find(energySVD<=jenergy(1)*max(energySVD),1,'last');
 imax2=find(energySVD<=jenergy(2)*max(energySVD),1,'last');
