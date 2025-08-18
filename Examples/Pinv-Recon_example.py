@@ -1,6 +1,5 @@
-# Scientific Reports paper submission Fig. 3 (Python version)
 # Pinv-Recon simulations using the numerical Shepp-Logan phantom
-# combining different encoding and distortion mechanisms
+# simple example
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -117,3 +116,4 @@ axes[3].imshow(np.abs(IMG), cmap='gray', vmin=-0.02, vmax=1.02, aspect='equal')
 axes[3].set_title('Reconstructed image', fontsize=18)
 
 plt.show()
+
