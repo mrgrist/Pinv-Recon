@@ -29,7 +29,7 @@ if ~exist('svd_threshold','var');svd_threshold=[];end
 if isempty(svd_threshold);svd_threshold=0.95;end
 fprintf('Pinv threshold defined as %d%% of cumulative energy \n', svd_threshold*100)
 if ~exist('plt_svd','var');plt_svd=0;end
-plt_svd = 1; 
+pl
 [ncoils,npts,ntimesteps,nslices]=size(data);
 
 %% get reconstruction matrix

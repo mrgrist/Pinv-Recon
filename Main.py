@@ -12,9 +12,9 @@ import os
 def main():
     # Load data
     os.chdir('/Users/jamesgrist/Documents/GitHub/Pinv-Recon') #To allow it to find the files 
-    data = loadmat("data/structural_phantom_mtx496.mat")['data']
+    data = loadmat("data/structural_phantom_mtx96.mat")['data']
     wf = loadmat("data/structural_phantom_mtx96.mat")['wf']
-    fieldmap = loadmat("data/fieldmap.mat")['fieldmap']
+    fieldmap = np.fliplr(np.flipud(loadmat("data/fieldmap.mat")['fieldmap']))
 
     fieldmap.astype(np.float64)
 
@@ -34,16 +34,16 @@ def main():
     plt.figure(figsize=(12, 6))
     
     plt.subplot(1, 3, 1)
-    plt.imshow(np.flipud(fieldmap), cmap='gray')
+    plt.imshow(np.fliplr(fieldmap), cmap='gray')
     plt.colorbar()
     plt.title("B_0 map")
 
     plt.subplot(1, 3, 2)
-    plt.imshow((np.squeeze(imageabs)), cmap='gray')
+    plt.imshow(np.fliplr(np.squeeze(imageabs)), cmap='gray')
     plt.title("Pinv")
 
     plt.subplot(1, 3, 3)
-    plt.imshow((np.squeeze(imageabs_b0)), cmap='gray')
+    plt.imshow(np.fliplr(np.squeeze(imageabs_b0)), cmap='gray')
     plt.title("Pinv + OffRes")
 
     plt.show()
@@ -141,6 +141,7 @@ def wf2Recon(wf, mtx_reco, B0Map, svd_threshold, plt_svd,nslices):
         k_temp = k.copy()
 
         k = np.zeros((k.shape[0], k.shape[1], 2), dtype=np.float64)
+
         k[0, :, 0] = np.real(k_temp)
         k[0, :, 1] = np.imag(k_temp)
     
@@ -162,9 +163,9 @@ def wf2Recon(wf, mtx_reco, B0Map, svd_threshold, plt_svd,nslices):
 
         print('Getting encoding matrix with B0 encoding...')
 
-        x = int(mtx_reco[0][0] / B0Map.shape[0])
+        x = mtx_reco[0][0] / B0Map.shape[0]
             
-        y = int(mtx_reco[0][0] / B0Map.shape[1])
+        y = mtx_reco[0][0] / B0Map.shape[1]
 
         t_matrix =  t[0,:].reshape((-1, 1))
 
@@ -176,11 +177,11 @@ def wf2Recon(wf, mtx_reco, B0Map, svd_threshold, plt_svd,nslices):
 
             for ls in range(nslices):
 
-                B0Map_s = zoom(B0Map[:, :, ls], (x,y), order=3)
+                B0Map_s = np.flipud(zoom(B0Map[:, :, ls], (x,y), order=1,prefilter=False,mode='nearest'))
 
                 B0_Transposed = B0Map_s.flatten()[:, np.newaxis].T
 
-                mul_terms = np.multiply(t_matrix,B0_Transposed)
+                mul_terms = (t_matrix@B0_Transposed)
 
                 D = np.exp(1j * 2 * np.pi * mul_terms)
 
@@ -196,12 +197,12 @@ def wf2Recon(wf, mtx_reco, B0Map, svd_threshold, plt_svd,nslices):
 
             svd_time = []
 
-            B0Map_s = zoom(B0Map, (x,y), order=3)
+            B0Map_s = zoom(B0Map, (x,y), order=1,prefilter=False,mode='nearest')
 
             B0_Transposed = B0Map_s.flatten()[:, np.newaxis].T
         
-            mul_terms = np.multiply(t_matrix,B0_Transposed)
-
+            mul_terms = (t_matrix@B0_Transposed)
+ 
             D = np.exp(1j * 2 * np.pi * mul_terms)
 
             E_slice = E * D
